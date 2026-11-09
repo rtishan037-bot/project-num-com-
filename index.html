@@ -2,132 +2,89 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PROJECT NUM.COM</title>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;background:#080d19;color:white;
- font-family:Arial,sans-serif;padding:20px;
-}
+body{margin:0;padding:20px;background:#080d19;color:white;font-family:Arial}
 .container{max-width:500px;margin:auto}
-header{text-align:center;padding:25px 0}
+header{text-align:center;padding:20px}
 h1{color:#32aaff;letter-spacing:3px}
-.subtitle{color:#8995aa;font-size:13px}
-.card{
- background:#111b2d;padding:20px;
- border:1px solid #243752;
- border-radius:15px;margin:18px 0;
-}
-label{font-size:13px;color:#9aabc2}
-input{
- width:100%;padding:15px;margin-top:12px;
- border:1px solid #344b69;border-radius:9px;
- background:#080f1d;color:white;font-size:17px;
-}
-button{
- width:100%;padding:15px;margin-top:15px;
- background:#087cff;color:white;border:0;
- border-radius:9px;font-weight:bold;font-size:15px;
-}
-.result{
- background:#17243a;padding:13px;
- margin-top:10px;border-radius:8px;
-}
-.value{color:#39b4ff;margin-top:5px}
-footer{text-align:center;color:#66758b;font-size:11px;margin-top:30px}
+.card{background:#111b2d;padding:20px;border:1px solid #263b58;border-radius:16px;margin:18px 0}
+input{width:100%;padding:15px;margin-top:12px;background:#080f1d;border:1px solid #344b69;border-radius:9px;color:white;font-size:17px}
+button{width:100%;padding:15px;margin-top:15px;background:#087cff;color:white;border:0;border-radius:9px;font-weight:bold}
+.result{background:#19273e;padding:13px;margin-top:10px;border-radius:8px}
+.value{color:#39b4ff;margin-top:6px;overflow-wrap:anywhere}
+label{color:#aab9ce;font-size:13px}
+footer{text-align:center;color:#78869c;font-size:12px}
 </style>
 </head>
 <body>
 <div class="container">
-
 <header>
 <h1>NUM.COM</h1>
-<p class="subtitle">PROFESSIONAL NUMBER ANALYZER</p>
+<p>PROFESSIONAL NUMBER ANALYZER</p>
 </header>
 
 <div class="card">
 <h3>NUMBER LOOKUP</h3>
-<label>Enter phone number with country code</label>
-<input id="phone" type="tel"
-placeholder="+91 9876543210">
+<label>Enter number with country code</label>
+<input id="phone" type="tel" placeholder="+91 9876543210">
 <button onclick="analyze()">ANALYZE NUMBER</button>
 </div>
 
 <div class="card">
 <h3>ANALYSIS RESULTS</h3>
-
-<div class="result">
-<label>Country</label>
-<div class="value" id="country">Waiting...</div>
+<div class="result"><label>Country</label><div class="value" id="country">Waiting...</div></div>
+<div class="result"><label>Country Code</label><div class="value" id="code">Waiting...</div></div>
+<div class="result"><label>Number Type</label><div class="value" id="type">Waiting...</div></div>
+<div class="result"><label>Validation</label><div class="value" id="valid">Waiting...</div></div>
+<div class="result"><label>International Format</label><div class="value" id="format">Waiting...</div></div>
+<div class="result"><label>Operator</label><div class="value">Authorized API required</div></div>
+<div class="result"><label>Spam Check</label><div class="value">Authorized API required</div></div>
+</div>
+<footer>NUM.COM V1.1 | PRIVACY FIRST</footer>
 </div>
 
-<div class="result">
-<label>Country Code</label>
-<div class="value" id="code">Waiting...</div>
-</div>
-
-<div class="result">
-<label>Number Validation</label>
-<div class="value" id="valid">Waiting...</div>
-</div>
-
-<div class="result">
-<label>Operator / Region</label>
-<div class="value">Authorized API required</div>
-</div>
-
-<div class="result">
-<label>Spam Information</label>
-<div class="value">Authorized API required</div>
-</div>
-</div>
-
-<footer>
-NUM.COM V1.0 | Privacy First
-</footer>
-</div>
-
+<script src="https://unpkg.com/libphonenumber-js/bundle/libphonenumber-js.min.js"></script>
 <script>
 function analyze(){
- const number=document.getElementById("phone").value.trim();
- const country=document.getElementById("country");
- const code=document.getElementById("code");
- const valid=document.getElementById("valid");
+ const input=document.getElementById("phone").value.trim();
+ const fields=["country","code","type","valid","format"];
+ fields.forEach(id=>document.getElementById(id).textContent="Analyzing...");
 
- country.textContent="Unknown";
- code.textContent="Unknown";
+ try{
+  if(!window.libphonenumber){
+   throw new Error("Number library not loaded. Check internet.");
+  }
 
- if(!/^\+[1-9]\d{7,14}$/.test(number)){
-   valid.textContent="Invalid format";
-   return;
+  const phone=libphonenumber.parsePhoneNumberFromString(input);
+
+  if(!phone){
+   throw new Error("Invalid number format");
+  }
+
+  const countryNames=new Intl.DisplayNames(["en"],{type:"region"});
+  document.getElementById("country").textContent=
+   phone.country ? countryNames.of(phone.country) : "Unknown";
+
+  document.getElementById("code").textContent=
+   "+"+phone.countryCallingCode;
+
+  document.getElementById("type").textContent=
+   phone.getType() || "Unknown";
+
+  document.getElementById("valid").textContent=
+   phone.isValid() ? "Valid numbering format" : "Invalid number range";
+
+  document.getElementById("format").textContent=
+   phone.formatInternational();
+
+ }catch(error){
+  fields.forEach(id=>document.getElementById(id).textContent="Not available");
+  document.getElementById("valid").textContent=error.message;
  }
-
- const prefixes={
-  "+91":["India","+91"],
-  "+1":["USA/Canada","+1"],
-  "+44":["United Kingdom","+44"],
-  "+880":["Bangladesh","+880"],
-  "+977":["Nepal","+977"],
-  "+971":["UAE","+971"],
-  "+81":["Japan","+81"],
-  "+61":["Australia","+61"]
- };
-
- const match=Object.keys(prefixes)
- .sort((a,b)=>b.length-a.length)
- .find(p=>number.startsWith(p));
-
- if(match){
-  country.textContent=prefixes[match][0];
-  code.textContent=prefixes[match][1];
- }else{
-  country.textContent="Country database required";
-  code.textContent="International number";
- }
-
- valid.textContent="Format accepted (not carrier verified)";
 }
 </script>
 </body>
-  </html>
+                                                                                              </html>
